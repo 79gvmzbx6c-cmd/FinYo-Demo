@@ -441,16 +441,18 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     features["remittance_ratio"] = np.clip(features["remittance_ratio"] + bias["remit"], 0, 1)
                     
                     # 2. Apply Policy uplift if needed
-                    if is_policy:
-                        inc = safe_get(features, "income_stability", 0.7)
-                        sav = safe_get(features, "savings_ratio", 0.25)
-                        rent = safe_get(features, "rent_ratio", 0.30)
-                        rem = safe_get(features, "remittance_ratio", 0.25)
-                        
-                        features["income_stability"] = min(1.0, inc + POLICY_INCOME_BOOST)
-                        features["savings_ratio"] = min(1.0, sav + POLICY_SAVINGS_BOOST)
-                        features["rent_ratio"] = max(0.0, rent - POLICY_RENT_REDUCTION)
-                        features["remittance_ratio"] = max(0.0, rem - POLICY_REMIT_REDUCTION)
+if is_policy:
+    inc = safe_get(features, "income_stability", 0.7)
+    sav = safe_get(features, "savings_ratio", 0.25)
+    rent = safe_get(features, "rent_ratio", 0.30)
+    rem = safe_get(features, "remittance_ratio", 0.25)
+
+    # --- FIX: Use multiplicative boosts, not additive ---
+    # This makes the uplift proportional to the starting value
+    features["income_stability"] = min(1.0, inc * (1 + POLICY_INCOME_BOOST))
+    features["savings_ratio"] = min(1.0, sav * (1 + POLICY_SAVINGS_BOOST))
+    features["rent_ratio"] = max(0.0, rent * (1 - POLICY_RENT_REDUCTION))
+    features["remittance_ratio"] = max(0.0, rem * (1 - POLICY_REMIT_REDUCTION))
                     
                     # 3. Derive metrics
                     bh = derive_behavioural_metrics(features)
@@ -1496,3 +1498,4 @@ with tab_fri:
             "risk grades only adjust **loan size and duration**, not inclusion. "
             "Data shown is 100% synthetic (FinYo Inclusion Engine)."
         )
+
