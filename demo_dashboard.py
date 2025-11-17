@@ -862,10 +862,8 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
 # STREAMLIT APP – TOP LEVEL
 # --------------------------------------------------------------------
 
-st.title("FinYo Inclusion Engine – Synthetic FHI & FRI Demo")
-st.caption(
-    "Powered by FinYo Inclusion Engine"
-)
+st.title("FinYo Inclusion Engine — Financial Health & Risk Demonstration")
+st.caption("Synthetic demonstration • FHI (Financial Health) + FRX • Separate Bank FRI View")
 
 if "fhi_results" not in st.session_state:
     st.session_state["fhi_results"] = None
@@ -1567,4 +1565,5 @@ with tab_fri:
             "risk grades only adjust **loan size and duration**, not inclusion. "
             "Data shown is 100% synthetic (FinYo Inclusion Engine)."
         )
+
 
