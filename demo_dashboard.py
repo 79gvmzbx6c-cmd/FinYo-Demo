@@ -986,7 +986,6 @@ with tab_fhi:
                     orientation="h",
                     barmode="group",
                     color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
-                    text_auto=None,
                 )
                 fig_em.update_layout(
                     yaxis_title="Emirate",
