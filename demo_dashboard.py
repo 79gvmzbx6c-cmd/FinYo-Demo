@@ -986,8 +986,8 @@ with tab_fhi:
                     orientation="h",
                     barmode="group",
                     color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
+                    text_auto='.2f',
                 )
-                fig_em.update_traces(texttemplate='%{x:.2f}', textposition='inside')
                 fig_em.update_layout(
                     yaxis_title="Emirate",
                     xaxis_title="Average FHI (0–1)",
