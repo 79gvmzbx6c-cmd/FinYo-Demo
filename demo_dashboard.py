@@ -866,23 +866,12 @@ with tab_fhi:
                 merged = es_base.merge(es_pol, on=["Emirate", "Sector"], suffixes=("_Baseline", "_Policy"))
                 merged["FHI Uplift"] = merged["Avg FHI_Policy"] - merged["Avg FHI_Baseline"]
                 
-                # Ensure all uplift values are valid positive numbers
-                merged_clean = merged.copy()
-                merged_clean["FHI Uplift"] = merged_clean["FHI Uplift"].abs()  # Use absolute values
-                merged_clean = merged_clean[merged_clean["FHI Uplift"] > 0.001]  # Filter very small values
-                
-                if merged_clean.empty:
-                    st.info("No FHI uplift data to display.")
-                else:
-                    fig_bubble = px.scatter(
-                        merged_clean,
-                        x="Sector",
-                        y="Emirate",
-                        size="FHI Uplift",
-                        color="FHI Uplift",
-                        color_continuous_scale=["#f1e3d3", "#d4c2a3", "#6fa79b"],
-                        size_max=40,
-                    )
+                # Show as a table instead of bubble chart to avoid plotly errors
+                st.dataframe(
+                    merged[["Emirate", "Sector", "FHI Uplift"]].sort_values("FHI Uplift", ascending=False).head(20),
+                    use_container_width=True,
+                    height=500,
+                )
                     fig_bubble.update_layout(
                         template="simple_white",
                         xaxis_title="Sector",
