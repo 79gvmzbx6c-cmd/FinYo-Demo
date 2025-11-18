@@ -1,11 +1,12 @@
 # =====================================================================
 # FinYo Inclusion Engine — 100% IN-MEMORY DEMO (FINAL v7 – Emirate Bias)
 #
-#    • STRATEGY: 100% IN-MEMORY.
-#    • NEW: Added EMIRATE_BIAS to the simulation.
-#      This creates realistic, different FHI scores for each
-#      Emirate, fixing the "flat chart" problem.
+#     • STRATEGY: 100% IN-MEMORY.
+#     • NEW: Added EMIRATE_BIAS to the simulation.
+#       This creates realistic, different FHI scores for each
+#       Emirate, fixing the "flat chart" problem.
 # =====================================================================
+
 import math
 from datetime import datetime, timezone
 import numpy as np
@@ -30,12 +31,34 @@ TABLE_BORDER = "#E5DCCB"
 st.markdown(
     f"""
     <style>
-        .stApp {{
-            background-color: {BG_COLOR};
-        }}
-        .stDataFrame {{
-            border: 1px solid {TABLE_BORDER};
-        }}
+      [data-testid="stHeader"] {{
+          background-color: transparent;
+      }}
+      .stApp {{
+        background-color: {BG_COLOR};
+      }}
+      .block-container {{
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+      }}
+      h1, h2, h3, h4, h5 {{
+        margin-bottom: 0.35rem;
+      }}
+      
+      [data-testid="stVerticalBlockBorderWrapper"] {{
+        background-color: #ffffff;
+        border: 1px solid {TABLE_BORDER};
+        border-radius: 8px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        padding: 1.25rem 1.25rem 1rem 1.25rem;
+        margin-bottom: 1rem;
+        height: 100%;
+      }}
+      
+      div[data-testid="stDataFrame"] div[role="grid"] {{
+        border: 1px solid {TABLE_BORDER};
+        border-radius: 6px;
+      }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -44,6 +67,7 @@ st.markdown(
 # --------------------------------------------------------------------
 # SHARED CONFIGURATION & CONSTANTS
 # --------------------------------------------------------------------
+
 EMIRATES = [
     "Abu Dhabi",
     "Dubai",
@@ -112,13 +136,13 @@ SECTOR_CODE = {
 
 # --- NEW: Emirate-level behavioural multipliers (realistic differences) ---
 EMIRATE_BIAS = {
-    "Abu Dhabi":      {"income": +0.08, "savings": +0.04, "rent": -0.03, "remit": -0.02},
-    "Dubai":          {"income": +0.04, "savings": +0.03, "rent": +0.04, "remit": +0.00},
-    "Sharjah":        {"income": -0.02, "savings": -0.03, "rent": +0.02, "remit": +0.03},
-    "Ajman":          {"income": -0.04, "savings": -0.05, "rent": -0.03, "remit": +0.04},
-    "Ras Al Khaimah": {"income": +0.01, "savings": -0.02, "rent": -0.02, "remit": -0.03},
-    "Fujairah":       {"income": -0.03, "savings": -0.02, "rent": +0.01, "remit": +0.03},
-    "Umm Al Quwain":  {"income": -0.05, "savings": -0.05, "rent": +0.02, "remit": +0.04},
+    "Abu Dhabi":       {"income": +0.08, "savings": +0.04, "rent": -0.03, "remit": -0.02},
+    "Dubai":           {"income": +0.04, "savings": +0.03, "rent": +0.04, "remit": +0.00},
+    "Sharjah":         {"income": -0.02, "savings": -0.03, "rent": +0.02, "remit": +0.03},
+    "Ajman":           {"income": -0.04, "savings": -0.05, "rent": -0.03, "remit": +0.04},
+    "Ras Al Khaimah":  {"income": +0.01, "savings": -0.02, "rent": -0.02, "remit": -0.03},
+    "Fujairah":        {"income": -0.03, "savings": -0.02, "rent": +0.01, "remit": +0.03},
+    "Umm Al Quwain":   {"income": -0.05, "savings": -0.05, "rent": +0.02, "remit": +0.04},
 }
 
 FRI_GRADE_THRESHOLDS = {
@@ -131,11 +155,13 @@ FRI_GRADE_THRESHOLDS = {
 # --------------------------------------------------------------------
 # SMALL HELPERS (USED BY FHI + FRI)
 # --------------------------------------------------------------------
+
 def safe_get(d, key, default):
     try:
         return float(d.get(key, default))
     except Exception:
         return float(default)
+
 
 def fhi_status(fhi: float) -> str:
     """Map FHI (0–1) to a simple status bucket."""
@@ -145,11 +171,12 @@ def fhi_status(fhi: float) -> str:
         return "Watchlist"
     return "Healthy"
 
+
 def map_fhi_to_band_0_100(fhi: float) -> tuple[str, float]:
     """
     Map FHI 0–1 to 0–100 band with human label, per your RFP:
         0–39   → Financially Vulnerable
-        40–69 → Financially Coping
+        40–69  → Financially Coping
         70–100 → Financially Healthy
     """
     score_100 = max(0.0, min(100.0, fhi * 100))
@@ -170,6 +197,7 @@ def grade_from_fri(fri_value: float) -> str:
         return "C"
     return "D"
 
+
 def fri_decision_text(grade: str) -> str:
     """Human lending decision text aligned with Annex E."""
     if grade == "A":
@@ -180,6 +208,7 @@ def fri_decision_text(grade: str) -> str:
         return "Eligible with capped loan and remittance-linked repayment"
     # grade D
     return "Eligible with small capped loan; monitor closely"
+
 
 def build_health_narrative(row: dict) -> str:
     """
@@ -192,22 +221,22 @@ def build_health_narrative(row: dict) -> str:
     liq_b = row["Liquidity Buffer"]
     remit = row["Remittance Load"]
     wage = row["Wage Consistency"]
-    
+
     band_label, score_100 = map_fhi_to_band_0_100(fhi)
-    
+
     lines = []
     lines.append(
         f"Worker is classified as **{status}** with Financial Health Index of "
         f"**{score_100:.0f}/100** ({band_label})."
     )
-    
+
     if wage < 0.5:
         lines.append(
             "Wage income is **volatile**, indicating irregular or delayed payroll behaviour."
         )
     else:
         lines.append("Wage income appears **consistent**, with limited delays observed.")
-    
+
     if exp_p > 0.7:
         lines.append(
             "Expense pressure is **high**, leaving limited buffer after essential costs."
@@ -216,7 +245,7 @@ def build_health_narrative(row: dict) -> str:
         lines.append("Expense pressure is **moderate**, requiring some budget discipline.")
     else:
         lines.append("Expense pressure is **manageable** relative to income.")
-    
+
     if liq_b < 0.3:
         lines.append(
             "Liquidity buffer is **weak**, suggesting low savings or limited emergency funds."
@@ -225,13 +254,14 @@ def build_health_narrative(row: dict) -> str:
         lines.append(
             "Liquidity buffer is **adequate**, indicating some savings capacity."
         )
-    
+
     if remit > 0.4:
         lines.append(
             "High remittance outflows may be constraining local financial resilience."
         )
-    
+
     return " ".join(lines)
+
 
 def detect_anomalies(worker_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -240,30 +270,27 @@ def detect_anomalies(worker_df: pd.DataFrame) -> pd.DataFrame:
     """
     if worker_df.empty:
         return pd.DataFrame()
-    
+
     # Create a copy to avoid SettingWithCopyWarning
     worker_df = worker_df.copy()
     
     # Calculate mean FHI for the cohort
     worker_df["FHI_Mean_Cohort"] = worker_df.groupby(["Emirate", "Sector"])["FHI"].transform('mean')
-    
+
     records = []
     for _, r in worker_df.iterrows():
         reasons = []
         base = r["FHI_Mean_Cohort"]
-        
+
         if r["Remittance Load"] > 0.6 and r["Liquidity Buffer"] < 0.2:
             reasons.append("High remittance with low liquidity buffer.")
-        
         if r["Expense Pressure"] > 0.8 and r["Wage Consistency"] < 0.4:
             reasons.append("High expense pressure with unstable wages.")
-        
         if r["FHI"] < base - 0.10:
             reasons.append("FHI significantly below emirate-sector norm.")
-        
         if r["FHI"] < 0.40 and r["Remittance Load"] > 0.5:
             reasons.append("Low FHI with high remittance intensity.")
-        
+
         if reasons:
             records.append(
                 {
@@ -277,12 +304,14 @@ def detect_anomalies(worker_df: pd.DataFrame) -> pd.DataFrame:
                     "Reasons": " ".join(reasons),
                 }
             )
-    
+
     return pd.DataFrame(records)
+
 
 # --------------------------------------------------------------------
 # FHI IN-MEMORY GENERATION (MOHRE VIEW)
 # --------------------------------------------------------------------
+
 np.random.seed(42) # Seed for reproducibility
 
 # ====================================================================
@@ -329,7 +358,7 @@ def generate_synthetic_features_internal(sector: str) -> dict:
         }
     
     persona = np.random.choice(list(personas.keys()), p=list(personas.values()))
-    
+
     if persona == "vulnerable":
         features = {
             "income_stability": np.random.uniform(0.1, 0.4),
@@ -366,12 +395,12 @@ def generate_synthetic_features_internal(sector: str) -> dict:
             "tenure_months":    np.random.randint(24, 60),
             "deduction_ratio":  np.random.uniform(0.0, 0.1),
         }
-    
+        
     return features
-
 # ====================================================================
 # --- END OF "SMART" FUNCTION ---
 # ====================================================================
+
 
 def derive_behavioural_metrics(features: dict) -> dict:
     """Derive high-level metrics from raw feature vector."""
@@ -379,12 +408,12 @@ def derive_behavioural_metrics(features: dict) -> dict:
     savings_ratio = safe_get(features, "savings_ratio", 0.25)
     rent_ratio = safe_get(features, "rent_ratio", 0.30)
     remittance_ratio = safe_get(features, "remittance_ratio", 0.25)
-    
+
     expense_pressure = min(1.0, 1.0 - savings_ratio)
     liquidity_buffer = max(0.0, savings_ratio)
     wage_consistency = max(0.0, min(1.0, income_stability))
     remittance_load = max(0.0, min(1.0, remittance_ratio))
-    
+
     return {
         "expense_pressure": expense_pressure,
         "liquidity_buffer": liquidity_buffer,
@@ -393,23 +422,23 @@ def derive_behavioural_metrics(features: dict) -> dict:
         "rent_ratio": rent_ratio,
     }
 
+
 # --- This is the new, fast, in-memory simulation function ---
-# STEP 3: Changed cache decorator
 @st.cache_data(show_spinner=False, ttl=1)
-def run_full_scenario_internal(label: str, is_policy: bool):
+def run_full_scenario_internal(label: str, is_policy: bool, version: int):
     """
     Generate full UAE simulation for one scenario (Baseline OR Policy).
     Returns:
         workers_df, employers_df, emirate_sector_df, summary_dict, anomalies_df
     """
+
     worker_rows = []
     employer_rows = []
     emirate_sector_agg = {}
-    
+
     for emirate in EMIRATES:
         for sector in SECTORS:
             combo_key = (emirate, sector)
-            
             if combo_key not in emirate_sector_agg:
                 emirate_sector_agg[combo_key] = {
                     "fhi_scores": [],
@@ -417,15 +446,15 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     "vulnerable": 0,
                     "total": 0,
                 }
-            
+
             for emp_idx in range(1, EMPLOYERS_PER_COMBO + 1):
                 emp_id = f"{EMIRATE_CODE[emirate]}_{SECTOR_CODE.get(sector, 'UNK')}_{emp_idx:03d}"
-                
+
                 emp_fhis = []
                 emp_fris = []
                 emp_payroll_delays = []
                 emp_vulnerable = 0
-                
+
                 for worker_idx in range(1, WORKERS_PER_EMPLOYER + 1):
                     
                     # 1. Generate realistic persona-based features
@@ -446,13 +475,14 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                         sav = safe_get(features, "savings_ratio", 0.25)
                         rent = safe_get(features, "rent_ratio", 0.30)
                         rem = safe_get(features, "remittance_ratio", 0.25)
+
                         # --- FIX: Use multiplicative boosts, not additive ---
                         # This makes the uplift proportional to the starting value
                         features["income_stability"] = min(1.0, inc * (1 + POLICY_INCOME_BOOST))
                         features["savings_ratio"] = min(1.0, sav * (1 + POLICY_SAVINGS_BOOST))
                         features["rent_ratio"] = max(0.0, rent * (1 - POLICY_RENT_REDUCTION))
                         features["remittance_ratio"] = max(0.0, rem * (1 - POLICY_REMIT_REDUCTION))
-                    
+
                     # 3. Derive metrics
                     bh = derive_behavioural_metrics(features)
                     
@@ -481,12 +511,13 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     
                     frx = fhi * 0.5 + fri * 0.5
                     status = fhi_status(fhi)
+
                     exp_p = bh["expense_pressure"]
                     liq_b = bh["liquidity_buffer"]
                     wage = bh["wage_consistency"]
                     remit = bh["remittance_load"]
                     rent = bh["rent_ratio"]
-                    
+
                     signals = []
                     if wage < 0.5:
                         signals.append("Unstable wages / WPS delays")
@@ -507,9 +538,9 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     if features["tenure_months"] < 6: flat_reasons.append("TENURE_SHORT")
                     if features["deduction_ratio"] > 0.35: flat_reasons.append("HIGH_DEDUCTION_PRESSURE")
                     if not flat_reasons: flat_reasons.append("STABLE_PROFILE")
-                    
+
                     delay_days = max(0.0, (1.0 - wage) * 20.0)
-                    
+
                     row = {
                         "Scenario": label,
                         "Emirate": emirate,
@@ -536,23 +567,22 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                         "Tenure (months)": features["tenure_months"],
                         "Deduction Ratio": features["deduction_ratio"],
                     }
-                    
+
                     row["Health Narrative"] = build_health_narrative(row)
-                    
                     worker_rows.append(row)
+
                     emp_fhis.append(fhi)
                     emp_fris.append(fri)
                     emp_payroll_delays.append(delay_days)
-                    
                     if status == "Vulnerable":
                         emp_vulnerable += 1
-                    
+
                     emirate_sector_agg[combo_key]["fhi_scores"].append(fhi)
                     emirate_sector_agg[combo_key]["fri_scores"].append(fri)
                     emirate_sector_agg[combo_key]["total"] += 1
                     if status == "Vulnerable":
                         emirate_sector_agg[combo_key]["vulnerable"] += 1
-                
+
                 # Employer-level aggregation
                 if not emp_fhis:
                     continue
@@ -561,7 +591,7 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                 emp_avg_fri = float(np.mean(emp_fris))
                 emp_avg_delay = float(np.mean(emp_payroll_delays))
                 emp_vul_pct = 100.0 * emp_vulnerable / WORKERS_PER_EMPLOYER
-                
+
                 risk_bucket = (
                     "High Risk"
                     if emp_avg_fhi < 0.45
@@ -569,7 +599,7 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     if emp_avg_fhi < 0.60
                     else "Low Risk"
                 )
-                
+
                 oversight_rec = (
                     "Flag for inspection / audit"
                     if risk_bucket == "High Risk"
@@ -577,7 +607,7 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                     if risk_bucket == "Medium Risk"
                     else "Model employer – monitoring only"
                 )
-                
+
                 employer_rows.append(
                     {
                         "Scenario": label,
@@ -592,17 +622,15 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                         "Oversight Recommendation": oversight_rec,
                     }
                 )
-    
+
     # Emirate × Sector overview
     emirate_sector_rows = []
     for (emirate, sector), agg in emirate_sector_agg.items():
         if agg["total"] == 0:
             continue
-        
         avg_fhi = float(np.mean(agg["fhi_scores"]))
         avg_fri = float(np.mean(agg["fri_scores"]))
         vul_pct = 100.0 * agg["vulnerable"] / agg["total"]
-        
         emirate_sector_rows.append(
             {
                 "Scenario": label,
@@ -614,11 +642,11 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                 "Total Workers": agg["total"],
             }
         )
-    
+
     workers_df = pd.DataFrame(worker_rows)
     employers_df = pd.DataFrame(employer_rows)
     emirate_sector_df = pd.DataFrame(emirate_sector_rows)
-    
+
     # Simple national summary
     summary = {}
     if not workers_df.empty:
@@ -631,10 +659,11 @@ def run_full_scenario_internal(label: str, is_policy: bool):
         summary["avg_fhi"] = 0.0
         summary["total_workers"] = 0
         summary["vulnerable_pct"] = 0.0
-    
+
     anomalies_df = detect_anomalies(workers_df)
-    
+
     return workers_df, employers_df, emirate_sector_df, summary, anomalies_df
+
 
 # --- Report Generation Helpers for Download Button ---
 def make_individual_report_row(row: pd.Series) -> dict:
@@ -687,11 +716,11 @@ def printable_text_report(report_dict: dict) -> str:
     bm = s['behaviour_metrics']
     lines.append("--------------------------------------------------")
     lines.append("Behavioural Metrics")
-    lines.append(f"  • Expense Pressure:  {bm['expense_pressure']:.2f}")
-    lines.append(f"  • Liquidity Buffer:  {bm['liquidity_buffer']:.2f}")
-    lines.append(f"  • Remittance Load:   {bm['remittance_load']:.2f}")
-    lines.append(f"  • Wage Consistency:  {bm['wage_consistency']:.2f}")
-    lines.append(f"  • Rent Ratio:        {bm['rent_ratio']:.2f}")
+    lines.append(f"  • Expense Pressure:   {bm['expense_pressure']:.2f}")
+    lines.append(f"  • Liquidity Buffer:   {bm['liquidity_buffer']:.2f}")
+    lines.append(f"  • Remittance Load:    {bm['remittance_load']:.2f}")
+    lines.append(f"  • Wage Consistency:   {bm['wage_consistency']:.2f}")
+    lines.append(f"  • Rent Ratio:         {bm['rent_ratio']:.2f}")
     lines.append("--------------------------------------------------")
     lines.append(f"Reason Codes: {s['reason_codes']}")
     lines.append(f"Estimated Payroll Delay (days): {s['est_payroll_delay_days']:.1f}")
@@ -699,6 +728,7 @@ def printable_text_report(report_dict: dict) -> str:
     lines.append("Lawful Purpose: " + s["lawful_purpose"])
     lines.append("Disclaimer: " + s["disclaimer"])
     return "\n".join(lines)
+
 
 # --------------------------------------------------------------------
 # FRI PORTFOLIO GENERATION (BANK VIEW)
@@ -714,7 +744,7 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
     
     if workers_df.empty:
         return pd.DataFrame(), {}
-    
+
     # We only care about the "Policy" scenario for the bank view
     df = workers_df[workers_df["Scenario"] == "Policy"].copy()
     
@@ -732,13 +762,13 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
         size=len(df)
     )
     df["Pipeline Status"] = pipeline_status
-    
+
     # Generate FRI-specific fields
     for _, row in df.iterrows():
         fri_01 = row["FRI"]
         grade = grade_from_fri(fri_01)
         salary = row["Monthly Salary (AED)"]
-        payroll_delay = row["Payroll Delay (days)"]
+        payroll_delay = row["Payroll Delay (days)"] # <-- Get the delay days
         
         # --- Assign Repayment Behaviour based on Risk Grade ---
         if grade == "A":
@@ -771,13 +801,12 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
         if payroll_delay > 7:
             proactive_alert = f"PAYROLL DELAY ({payroll_delay:.0f} days)"
             # If pay is late, the *actual* risk is high, even if they paid on time last month
-            risk = "High (Proactive)"
-        
+            risk = "High (Proactive)" 
         elif payroll_delay > 3:
             proactive_alert = f"PAYROLL DELAY ({payroll_delay:.0f} days)"
             risk = "Medium (Proactive)"
         # --- END OF PROACTIVE ALERT LOGIC ---
-        
+
         # Loan band (synthetic) and maximum allowed cap (50% salary)
         raw_cap = 0.5 * salary
         if grade == "B":
@@ -786,9 +815,9 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
             raw_cap *= 0.7
         elif grade == "D":
             raw_cap *= 0.5
-        
+
         loan_cap = round(raw_cap, 0)
-        
+
         # Assign synthetic loan band for illustration
         if loan_cap <= 1000:
             loan_band = "300–1 000"
@@ -796,9 +825,9 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
             loan_band = "1 001–3 000"
         else:
             loan_band = "3 001–4 500"
-        
+
         decision_text = fri_decision_text(grade)
-        
+
         # Copy over the live data
         new_row = row.to_dict()
         new_row["Borrower ID"] = f"{row['Employer ID']}-{row['Worker Index']}"
@@ -809,12 +838,12 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
         new_row["Decision"] = decision_text
         new_row["Repayment Behaviour"] = behaviour
         new_row["Repayment Risk"] = risk
-        new_row["Proactive Alert"] = proactive_alert
+        new_row["Proactive Alert"] = proactive_alert # <-- Add the new column data
         
         borrower_rows.append(new_row)
-    
+
     fri_df = pd.DataFrame(borrower_rows)
-    
+
     summary = {}
     if not fri_df.empty:
         summary["avg_fri"] = fri_df["FRI"].mean()
@@ -826,22 +855,31 @@ def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFr
         summary["total"] = len(fri_df)
     else:
         summary = {"avg_fri": 0.0, "avg_score_100": 0.0, "count_low_mod": 0, "count_high": 0, "total": 0}
-    
+
     return fri_df, summary
+
 
 # --------------------------------------------------------------------
 # STREAMLIT APP – TOP LEVEL
 # --------------------------------------------------------------------
+
 st.title("FinYo Inclusion Engine – Synthetic FHI & FRI Demo")
 st.caption(
     "Powered by FinYo Inclusion Engine"
 )
 
+if "fhi_results" not in st.session_state:
+    st.session_state["fhi_results"] = None
+
+if "fri_results" not in st.session_state:
+    st.session_state["fri_results"] = None
+
 # -------------------------------------------------------------
-# STEP 2: AUTO-RUN SIMULATION (Baseline + Policy)
+# AUTO-RUN SIMULATION (Baseline + Policy)
 # This ensures the demo works instantly on Streamlit Cloud.
 # -------------------------------------------------------------
-if "fhi_results" not in st.session_state:
+if st.session_state["fhi_results"] is None: # <-- *** FIX: Check if None ***
+
     # Baseline scenario
     (
         w_base,
@@ -849,8 +887,8 @@ if "fhi_results" not in st.session_state:
         es_base,
         s_base,
         a_base,
-    ) = run_full_scenario_internal("Baseline", is_policy=False)
-    
+    ) = run_full_scenario_internal("Baseline", is_policy=False, version=3)
+
     # Policy scenario
     (
         w_pol,
@@ -858,8 +896,8 @@ if "fhi_results" not in st.session_state:
         es_pol,
         s_pol,
         a_pol,
-    ) = run_full_scenario_internal("Policy", is_policy=True)
-    
+    ) = run_full_scenario_internal("Policy", is_policy=True, version=3)
+
     # Save into session_state
     st.session_state["fhi_results"] = {
         "Baseline": {
@@ -877,18 +915,12 @@ if "fhi_results" not in st.session_state:
             "anomalies": a_pol,
         },
     }
-    
-    # Build and cache FRI data at the same time
-    all_workers_df = pd.concat([w_base, w_pol], ignore_index=True)
-    fri_port, fri_summary = build_fri_portfolio_from_cohort(all_workers_df)
-    st.session_state["fri_results"] = {
-        "portfolio": fri_port,
-        "summary": fri_summary,
-    }
-
 # Unpack for easier use
 baseline = st.session_state["fhi_results"]["Baseline"]
 policy = st.session_state["fhi_results"]["Policy"]
+# Example use:
+workers_base = baseline["workers"]
+workers_pol = policy["workers"]
 
 tab_fhi, tab_fri = st.tabs(
     ["Financial Health (FHI)", "Alternative Credit – Bank View (FRI)"]
@@ -897,443 +929,457 @@ tab_fhi, tab_fri = st.tabs(
 # ====================================================================
 # TAB 1 – FHI / MOHRE PROACTIVE WELFARE VIEW
 # ====================================================================
+
 with tab_fhi:
     st.subheader("Financial Health Dashboard")
+
     st.caption(
         "This view demonstrate **Baseline** (today) vs **Policy** (improved wage stability and support) "
         "across all 7 Emirates and key sectors. The same synthetic workers are scored "
         "under both scenarios to show the impact on Financial Health."
     )
-    
+
     with st.expander("How to read this Baseline vs Policy view", expanded=False):
         st.markdown(
             """
-            **Baseline** represents today's behaviour – current wage stability, savings and remittance ratios.
+            **Baseline** represents today’s behaviour – current wage stability, savings and remittance ratios.
+
             **Policy** is a *simulated* future where:
             - wage stability improves (better WPS enforcement),
             - savings increase slightly,
             - housing / cost pressure is reduced,
             - remittance outflows are slightly lower.
-            
-            The **same synthetic workers** are scored under both scenarios.
-            
+
+            The **same synthetic workers** are scored under both scenarios.  
             The difference between them is the impact of MOHRE policy on:
             - Financial Health Index (FHI),
             - Financial Risk & Resilience (FRX),
             - % Vulnerable workers by Emirate, sector, employer.
             """
         )
-    
+
     st.divider()
+
+    # --- "Card" Layout ---
+    # [REMOVED BUTTON BLOCK]
+
+    # [REMOVED "if run_fhi_button:" BLOCK]
     
-    results = st.session_state["fhi_results"]
-    base_sum = results["Baseline"]["summary"]
-    pol_sum = results["Policy"]["summary"]
-    
-    with st.container(border=True):
-        k1, k2, k3, k4 = st.columns(4)
-        with k1:
-            st.metric("Avg FHI (Baseline)", f"{base_sum['avg_fhi']:.2f}")
-        with k2:
-            st.metric(
-                "Avg FHI (Policy)",
-                f"{pol_sum['avg_fhi']:.2f}",
-                delta=f"{pol_sum['avg_fhi'] - base_sum['avg_fhi']:.2f}",
-            )
-        with k3:
-            st.metric(
-                "% Vulnerable Workers (Baseline → Policy)",
-                f"{base_sum['vulnerable_pct']:.1f}% → {pol_sum['vulnerable_pct']:.1f}%",
-                delta=f"{pol_sum['vulnerable_pct'] - base_sum['vulnerable_pct']:.1f} pp",
-                delta_color="inverse"
-            )
-        with k4:
-            st.metric("Total Workers Simulated", f"{int(pol_sum['total_workers']):,}")
-    
-    # Inner tabs for FHI view
-    tab_nat, tab_emp, tab_worker, tab_sec = st.tabs(
-        [
-            "National & Emirate Overview",
-            "Employer Oversight",
-            "Worker View & Narratives",
-            "AML & Risk Monitoring",
-        ]
-    )
-    
-    # ----------------------- NATIONAL TAB ----------------------- #
-    with tab_nat:
-        # Precompute emirate/sector aggregates
-        es_base = results["Baseline"]["emirate_sector"]
-        es_pol = results["Policy"]["emirate_sector"]
-        
-        col_chart_1, col_chart_2 = st.columns(2)
-        
-        # --- Horizontal bar for Emirate averages (Baseline vs Policy) ---
-        with col_chart_1:
-            with st.container(border=True):
-                st.subheader("Average FHI by Emirate (Baseline vs Policy)")
-                base_em = es_base.groupby("Emirate")["Avg FHI"].mean().reset_index()
-                pol_em = es_pol.groupby("Emirate")["Avg FHI"].mean().reset_index()
-                base_em["Scenario"] = "Baseline"
-                pol_em["Scenario"] = "Policy"
-                em_all = pd.concat([base_em, pol_em])
-                
-                fig_em = px.bar(
-                    em_all,
-                    y="Emirate",
-                    x="Avg FHI",
-                    color="Scenario",
-                    orientation="h",
-                    barmode="group",
-                    color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
-                )
-                fig_em.update_traces(text=None, texttemplate=None)
-                
-                fig_em.update_layout(
-                    yaxis_title="Emirate",
-                    xaxis_title="Average FHI (0–1)",
-                    template="simple_white",
-                    legend_title="Scenario",
-                )
-                fig_em.update_yaxes(categoryorder="category ascending")
-                # 🔥 FIX: force real FHI scale
-                fig_em.update_xaxes(range=[0, 1])
-                st.plotly_chart(fig_em, use_container_width=True)
-        
-        # --- Bubble Grid for Emirate × Sector FHI uplift (Policy – Baseline) ---
-        with col_chart_2:
-            with st.container(border=True):
-                st.subheader("FHI Uplift (Policy – Baseline)")
-                # Merge baseline & policy
-                merged = es_base.merge(
-                    es_pol,
-                    on=["Emirate", "Sector"],
-                    suffixes=("_Baseline", "_Policy"),
-                )
-                merged["FHI Uplift"] = merged["Avg FHI_Policy"] - merged["Avg FHI_Baseline"]
-                
-                # Bubble grid scatter plot
-                fig_bubble = px.scatter(
-                    merged,
-                    x="Sector",
-                    y="Emirate",
-                    size="FHI Uplift",
-                    color="FHI Uplift",
-                    color_continuous_scale=["#f1e3d3", "#d4c2a3", "#6fa79b"],
-                    size_max=40,
-                )
-                fig_bubble.update_layout(
-                    template="simple_white",
-                    xaxis_title="Sector",
-                    yaxis_title="Emirate",
-                    height=500,
-                    coloraxis_colorbar_title="Δ FHI",
-                )
-                fig_bubble.update_xaxes(tickangle=-45)
-                st.plotly_chart(fig_bubble, use_container_width=True)
-    
-    # ----------------------- EMPLOYER TAB ----------------------- #
-    with tab_emp:
+    if not st.session_state.get("fhi_results"):
+        # This should not be hit if auto-run works, but good as a fallback.
+        st.info("Simulation is running... please wait.")
+    else:
+        results = st.session_state["fhi_results"]
+        base_sum = results["Baseline"]["summary"]
+        pol_sum = results["Policy"]["summary"]
+
         with st.container(border=True):
-            st.subheader("Employer Reliability & Policy Oversight")
-            scenario_choice = st.radio(
-                "Select scenario to view",
-                ["Baseline", "Policy"],
-                horizontal=True,
-                key="emp_scenario",
-            )
-            
-            emp_df = results[scenario_choice]["employers"].copy()
-            
-            # Filters in expander
-            with st.expander("Show Filters"):
-                col_a, col_b, col_c = st.columns(3)
-                with col_a:
-                    emirate_filter = st.multiselect(
-                        "Filter by Emirate", EMIRATES, default=None
-                    )
-                with col_b:
-                    sector_filter = st.multiselect(
-                        "Filter by Sector", SECTORS, default=None
-                    )
-                with col_c:
-                    risk_filter = st.multiselect(
-                        "Filter by Oversight Category",
-                        ["Low Risk", "Medium Risk", "High Risk"],
-                        default=None,
-                    )
-            
-            if emirate_filter:
-                emp_df = emp_df[emp_df["Emirate"].isin(emirate_filter)]
-            if sector_filter:
-                emp_df = emp_df[emp_df["Sector"].isin(sector_filter)]
-            if risk_filter:
-                emp_df = emp_df[emp_df["Oversight Category"].isin(risk_filter)]
-            
-            st.markdown("#### Employer Table")
-            st.dataframe(
-                emp_df.drop(columns=["Avg FRI"], errors='ignore').sort_values(["Emirate", "Sector", "Employer ID"]),
-                use_container_width=True,
-                height=350,
-            )
-        
-        # Charts under Employer tab
-        col_chart_3, col_chart_4 = st.columns(2)
-        
-        # Employer FHI leaderboard
-        with col_chart_3:
-            with st.container(border=True):
-                st.markdown("#### Employer FHI Leaderboard (Top 30)")
-                if emp_df.empty:
-                    st.info("No employers.")
-                else:
-                    ranked = (
-                        emp_df.sort_values("Avg FHI", ascending=False)
-                        .head(30)
-                        .reset_index(drop=True)
-                    )
-                    ranked.index = ranked.index + 1
-                    ranked["Rank"] = ranked.index
-                    
-                    leaderboard_cols = [
-                        "Rank",
-                        "Employer ID",
-                        "Emirate",
-                        "Sector",
-                        "Avg FHI",
-                        "Oversight Category",
-                    ]
-                    st.dataframe(
-                        ranked[leaderboard_cols],
-                        use_container_width=True,
-                        height=520,
-                    )
-        
-        # Employers by Oversight Category
-        with col_chart_4:
-            with st.container(border=True):
-                st.markdown("#### Employers by Oversight Category")
-                if emp_df.empty:
-                    st.info("No employers to plot.")
-                else:
-                    fig_emp = px.histogram(
-                        emp_df,
-                        x="Oversight Category",
-                        color="Oversight Category",
-                        color_discrete_map={
-                            "Low Risk": COLOR_POLICY,
-                            "Medium Risk": COLOR_BASELINE,
-                            "High Risk": COLOR_HIGHLIGHT,
-                        },
-                    )
-                    fig_emp.update_layout(
-                        template="simple_white",
-                        xaxis_title="Oversight Category",
-                        yaxis_title="Number of employers",
-                        showlegend=False,
-                    )
-                    st.plotly_chart(fig_emp, use_container_width=True)
-    
-    # ----------------------- WORKER TAB ------------------------- #
-    with tab_worker:
-        with st.container(border=True):
-            st.subheader("Worker View & Explainability")
-            scenario_choice_w = st.radio(
-                "Scenario", ["Baseline", "Policy"], horizontal=True, key="worker_scenario"
-            )
-            
-            w_df = results[scenario_choice_w]["workers"].copy()
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                emirate_choice = st.selectbox("Emirate", ["All"] + EMIRATES)
-            with col2:
-                sector_choice = st.selectbox("Sector", ["All"] + SECTORS)
-            with col3:
-                employer_choice = st.selectbox(
-                    "Employer ID", ["All"] + sorted(w_df["Employer ID"].unique())
+            k1, k2, k3, k4 = st.columns(4)
+            with k1:
+                st.metric("Avg FHI (Baseline)", f"{base_sum['avg_fhi']:.2f}")
+            with k2:
+                st.metric(
+                    "Avg FHI (Policy)",
+                    f"{pol_sum['avg_fhi']:.2f}",
+                    delta=f"{pol_sum['avg_fhi'] - base_sum['avg_fhi']:.2f}",
                 )
-            
-            if emirate_choice != "All":
-                w_df = w_df[w_df["Emirate"] == emirate_choice]
-            if sector_choice != "All":
-                w_df = w_df[w_df["Sector"] == sector_choice]
-            if employer_choice != "All":
-                w_df = w_df[w_df["Employer ID"] == employer_choice]
-            
-            cL, cR = st.columns([0.6, 0.4])
-            
-            with cL:
-                st.markdown("#### Worker Sample Table")
-                cols_to_show = [
-                    "Scenario", "Emirate", "Sector", "Employer ID", "Worker Index", "FHI",
-                    "FRX", "Status", "Expense Pressure", "Liquidity Buffer",
-                    "Remittance Load", "Wage Consistency", "Behavioural Signals", "AI Reason Codes",
-                ]
-                st.dataframe(
-                    w_df[cols_to_show].head(200),
-                    use_container_width=True,
-                    height=500,
+            with k3:
+                st.metric(
+                    "% Vulnerable Workers (Baseline → Policy)",
+                    f"{base_sum['vulnerable_pct']:.1f}% → {pol_sum['vulnerable_pct']:.1f}%",
+                    delta=f"{pol_sum['vulnerable_pct'] - base_sum['vulnerable_pct']:.1f} pp",
+                    delta_color="inverse" # Lower is better
                 )
-            
-            with cR:
-                st.markdown("#### Detailed Financial Health Narrative")
-                if not w_df.empty:
-                    selected_worker = st.selectbox(
-                        "Select worker index for narrative",
-                        sorted(w_df["Worker Index"].unique()),
-                    )
-                    
-                    wr = (
-                        w_df[w_df["Worker Index"] == selected_worker]
-                        .iloc[0]
-                        .to_dict()
-                    )
-                    
-                    band_label, score_100 = map_fhi_to_band_0_100(wr["FHI"])
-                    
-                    report_dict = make_individual_report_row(
-                        w_df[w_df["Worker Index"] == selected_worker].iloc[0]
-                    )
-                    
-                    st.download_button(
-                        "Download JSON Report",
-                        data=json.dumps(report_dict, indent=2),
-                        file_name=f"report_worker_{selected_worker}.json",
-                        mime="application/json",
-                        use_container_width=True,
-                    )
-                    
-                    txt = printable_text_report(report_dict).encode("utf-8")
-                    st.download_button(
-                        "Download Printable Text",
-                        data=txt,
-                        file_name=f"report_worker_{selected_worker}.txt",
-                        mime="text/plain",
-                        use_container_width=True,
-                    )
-                    
-                    st.divider()
-                    st.markdown(
-                        f"""
-                        **Emirate:** {wr['Emirate']} · **Sector:** {wr['Sector']} · **Employer:** {wr['Employer ID']}
-                        
-                        **FHI:** {wr['FHI']:.2f} ({score_100:.0f}/100, {band_label}) · **FRX:** {wr['FRX']:.2f} · **Status:** {wr['Status']}
-                        """
-                    )
-                    st.markdown("**Behavioural Signals:** " + wr["Behavioural Signals"])
-                    st.markdown("**Model Reason Codes:** " + wr["AI Reason Codes"])
-                    st.markdown("**Financial Health Narrative:**")
-                    st.write(wr["Health Narrative"])
-                else:
-                    st.info("No workers to display.")
-    
-    # ----------------------- AML / SECURITY TAB ----------------- #
-    with tab_sec:
-        col_tbl_1, col_chart_5 = st.columns(2)
-        
-        with col_tbl_1:
-            with st.container(border=True):
-                st.subheader("AML & Risk Monitoring")
-                base_anom = results["Baseline"]["anomalies"]
-                pol_anom = results["Policy"]["anomalies"]
-                
-                st.markdown("#### Anomaly Table (Baseline & Policy)")
-                all_anom = pd.concat([base_anom, pol_anom], ignore_index=True)
-                
-                if all_anom.empty:
-                    st.info("No anomalies detected under current rules.")
-                else:
-                    st.dataframe(
-                        all_anom.sort_values(["Scenario", "Emirate", "Sector"]),
-                        use_container_width=True,
-                        height=350,
-                    )
-        
-        with col_chart_5:
-            # Donut chart: anomalies by scenario
-            with st.container(border=True):
-                st.markdown("#### Anomaly Composition by Scenario")
-                if all_anom.empty:
-                    st.info("No anomalies to plot.")
-                else:
-                    scen_counts = (
-                        all_anom["Scenario"]
-                        .value_counts()
-                        .rename_axis("Scenario")
-                        .reset_index(name="Count")
-                    )
-                    
-                    fig_donut = px.pie(
-                        scen_counts,
-                        names="Scenario",
-                        values="Count",
-                        hole=0.5,
+            with k4:
+                st.metric("Total Workers Simulated", f"{int(pol_sum['total_workers']):,}")
+
+
+        # Inner tabs for FHI view
+        tab_nat, tab_emp, tab_worker, tab_sec = st.tabs(
+            [
+                "National & Emirate Overview",
+                "Employer Oversight",
+                "Worker View & Narratives",
+                "AML & Risk Monitoring",
+            ]
+        )
+
+        # ----------------------- NATIONAL TAB ----------------------- #
+        with tab_nat:
+            # Precompute emirate/sector aggregates
+            es_base = results["Baseline"]["emirate_sector"]
+            es_pol = results["Policy"]["emirate_sector"]
+
+            col_chart_1, col_chart_2 = st.columns(2)
+
+            # --- Horizontal bar for Emirate averages (Baseline vs Policy) ---
+            with col_chart_1:
+                with st.container(border=True):
+                    st.subheader("Average FHI by Emirate (Baseline vs Policy)")
+                    base_em = es_base.groupby("Emirate")["Avg FHI"].mean().reset_index()
+                    pol_em = es_pol.groupby("Emirate")["Avg FHI"].mean().reset_index()
+                    base_em["Scenario"] = "Baseline"
+                    pol_em["Scenario"] = "Policy"
+                    em_all = pd.concat([base_em, pol_em])
+
+                    fig_em = px.bar(
+                        em_all,
+                        y="Emirate",
+                        x="Avg FHI",
                         color="Scenario",
-                        color_discrete_map={
-                            "Baseline": COLOR_BASELINE,
-                            "Policy": COLOR_POLICY,
-                        },
+                        orientation="h",
+                        barmode="group",
+                        color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
+                        text_auto=".2f",
                     )
-                    fig_donut.update_layout(
+                    fig_em.update_layout(
+                        yaxis_title="Emirate",
+                        xaxis_title="Average FHI (0–1)",
                         template="simple_white",
-                        showlegend=True,
+                        legend_title="Scenario",
                     )
-                    st.plotly_chart(fig_donut, use_container_width=True)
-            
-            # Bubble grid: anomalies by Emirate & Sector
-            with st.container(border=True):
-                st.markdown("#### Anomaly Grid (Emirate × Sector)")
-                if all_anom.empty:
-                    st.info("No anomalies to plot.")
-                else:
-                    heat_df = (
-                        all_anom
-                        .groupby(["Emirate", "Sector"])
-                        .size()
-                        .reset_index(name="Anomaly Count")
+                    # 🔥 FIX: force real FHI scale
+                    fig_em.update_xaxes(range=[0, 1])
+                    fig_em.update_yaxes(categoryorder="category ascending")
+                    st.plotly_chart(fig_em, use_container_width=True)
+
+            # --- Bubble Grid for Emirate × Sector FHI uplift (Policy – Baseline) ---
+            with col_chart_2:
+                with st.container(border=True):
+                    st.subheader("FHI Uplift (Policy – Baseline)")
+
+                    # Merge baseline & policy
+                    merged = es_base.merge(
+                        es_pol,
+                        on=["Emirate", "Sector"],
+                        suffixes=("_Baseline", "_Policy"),
                     )
-                    
-                    fig_ac = px.scatter(
-                        heat_df,
+                    merged["FHI Uplift"] = merged["Avg FHI_Policy"] - merged["Avg FHI_Baseline"]
+
+                    # Bubble grid scatter plot
+                    fig_bubble = px.scatter(
+                        merged,
                         x="Sector",
                         y="Emirate",
-                        size="Anomaly Count",
-                        color="Anomaly Count",
-                        color_continuous_scale="Reds",
+                        size="FHI Uplift",
+                        color="FHI Uplift",
+                        color_continuous_scale=["#f1e3d3", "#d4c2a3", "#6fa79b"],
                         size_max=40,
                     )
-                    fig_ac.update_layout(
+
+                    fig_bubble.update_layout(
                         template="simple_white",
                         xaxis_title="Sector",
                         yaxis_title="Emirate",
+                        height=500,
+                        coloraxis_colorbar_title="Δ FHI",
                     )
-                    fig_ac.update_xaxes(tickangle=-45)
-                    st.plotly_chart(fig_ac, use_container_width=True)
+                    fig_bubble.update_xaxes(tickangle=-45)
 
-# FHI footer
-st.caption(
-    f"Simulation timestamp: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} · "
-    "Baseline = today's behaviour · Policy = simulated improvement in wage stability & savings · "
-    "Synthetic data only · Powered by FinYo Inclusion Engine."
-)
+                    st.plotly_chart(fig_bubble, use_container_width=True)
+
+        # ----------------------- EMPLOYER TAB ----------------------- #
+        with tab_emp:
+            with st.container(border=True):
+                st.subheader("Employer Reliability & Policy Oversight")
+                scenario_choice = st.radio(
+                    "Select scenario to view",
+                    ["Baseline", "Policy"],
+                    horizontal=True,
+                    key="emp_scenario",
+                )
+                emp_df = results[scenario_choice]["employers"].copy()
+
+                # Filters in expander
+                with st.expander("Show Filters"):
+                    col_a, col_b, col_c = st.columns(3)
+                    with col_a:
+                        emirate_filter = st.multiselect(
+                            "Filter by Emirate", EMIRATES, default=None
+                        )
+                    with col_b:
+                        sector_filter = st.multiselect(
+                            "Filter by Sector", SECTORS, default=None
+                        )
+                    with col_c:
+                        risk_filter = st.multiselect(
+                            "Filter by Oversight Category",
+                            ["Low Risk", "Medium Risk", "High Risk"],
+                            default=None,
+                        )
+
+                if emirate_filter:
+                    emp_df = emp_df[emp_df["Emirate"].isin(emirate_filter)]
+                if sector_filter:
+                    emp_df = emp_df[emp_df["Sector"].isin(sector_filter)]
+                if risk_filter:
+                    emp_df = emp_df[emp_df["Oversight Category"].isin(risk_filter)]
+
+                st.markdown("#### Employer Table")
+                st.dataframe(
+                    emp_df.drop(columns=["Avg FRI"], errors='ignore').sort_values(["Emirate", "Sector", "Employer ID"]),
+                    use_container_width=True,
+                    height=350,
+                )
+
+            # Charts under Employer tab
+            col_chart_3, col_chart_4 = st.columns(2)
+
+            # Employer FHI leaderboard
+            with col_chart_3:
+                with st.container(border=True):
+                    st.markdown("#### Employer FHI Leaderboard (Top 30)")
+
+                    if emp_df.empty:
+                        st.info("No employers.")
+                    else:
+                        ranked = (
+                            emp_df.sort_values("Avg FHI", ascending=False)
+                            .head(30)
+                            .reset_index(drop=True)
+                        )
+                        ranked.index = ranked.index + 1
+                        ranked["Rank"] = ranked.index
+
+                        leaderboard_cols = [
+                            "Rank",
+                            "Employer ID",
+                            "Emirate",
+                            "Sector",
+                            "Avg FHI",
+                            "Oversight Category",
+                        ]
+
+                        st.dataframe(
+                            ranked[leaderboard_cols],
+                            use_container_width=True,
+                            height=520,
+                        )
+
+            # Employers by Oversight Category
+            with col_chart_4:
+                with st.container(border=True):
+                    st.markdown("#### Employers by Oversight Category")
+                    if emp_df.empty:
+                        st.info("No employers to plot.")
+                    else:
+                        fig_emp = px.histogram(
+                            emp_df,
+                            x="Oversight Category",
+                            color="Oversight Category",
+                            color_discrete_map={
+                                "Low Risk": COLOR_POLICY,
+                                "Medium Risk": COLOR_BASELINE,
+                                "High Risk": COLOR_HIGHLIGHT,
+                            },
+                        )
+                        fig_emp.update_layout(
+                            template="simple_white",
+                            xaxis_title="Oversight Category",
+                            yaxis_title="Number of employers",
+                            showlegend=False,
+                        )
+                        st.plotly_chart(fig_emp, use_container_width=True)
+
+        # ----------------------- WORKER TAB ------------------------- #
+        with tab_worker:
+            with st.container(border=True):
+                st.subheader("Worker View & Explainability")
+                scenario_choice_w = st.radio(
+                    "Scenario", ["Baseline", "Policy"], horizontal=True, key="worker_scenario"
+                )
+                w_df = results[scenario_choice_w]["workers"].copy()
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    emirate_choice = st.selectbox("Emirate", ["All"] + EMIRATES)
+                with col2:
+                    sector_choice = st.selectbox("Sector", ["All"] + SECTORS)
+                with col3:
+                    employer_choice = st.selectbox(
+                        "Employer ID", ["All"] + sorted(w_df["Employer ID"].unique())
+                    )
+
+                if emirate_choice != "All":
+                    w_df = w_df[w_df["Emirate"] == emirate_choice]
+                if sector_choice != "All":
+                    w_df = w_df[w_df["Sector"] == sector_choice]
+                if employer_choice != "All":
+                    w_df = w_df[w_df["Employer ID"] == employer_choice]
+
+                
+                cL, cR = st.columns([0.6, 0.4])
+                
+                with cL:
+                    st.markdown("#### Worker Sample Table")
+                    cols_to_show = [
+                        "Scenario", "Emirate", "Sector", "Employer ID", "Worker Index", "FHI",
+                        "FRX", "Status", "Expense Pressure", "Liquidity Buffer",
+                        "Remittance Load", "Wage Consistency", "Behavioural Signals", "AI Reason Codes",
+                    ]
+                    st.dataframe(
+                        w_df[cols_to_show].head(200),
+                        use_container_width=True,
+                        height=500,
+                    )
+
+                with cR:
+                    st.markdown("#### Detailed Financial Health Narrative")
+                    if not w_df.empty:
+                        selected_worker = st.selectbox(
+                            "Select worker index for narrative",
+                            sorted(w_df["Worker Index"].unique()),
+                        )
+                        wr = (
+                            w_df[w_df["Worker Index"] == selected_worker]
+                            .iloc[0]
+                            .to_dict()
+                        )
+                        band_label, score_100 = map_fhi_to_band_0_100(wr["FHI"])
+                        
+                        report_dict = make_individual_report_row(
+                            w_df[w_df["Worker Index"] == selected_worker].iloc[0]
+                        )
+                        
+                        st.download_button(
+                            "Download JSON Report",
+                            data=json.dumps(report_dict, indent=2),
+                            file_name=f"report_worker_{selected_worker}.json",
+                            mime="application/json",
+                            use_container_width=True,
+                        )
+                        txt = printable_text_report(report_dict).encode("utf-8")
+                        st.download_button(
+                            "Download Printable Text",
+                            data=txt,
+                            file_name=f"report_worker_{selected_worker}.txt",
+                            mime="text/plain",
+                            use_container_width=True,
+                        )
+                        st.divider()
+
+                        st.markdown(
+                            f"""
+                            **Emirate:** {wr['Emirate']} · **Sector:** {wr['Sector']} · **Employer:** {wr['Employer ID']}  
+
+                            **FHI:** {wr['FHI']:.2f} ({score_100:.0f}/100, {band_label}) · **FRX:** {wr['FRX']:.2f} · **Status:** {wr['Status']}
+                            """
+                        )
+                        st.markdown("**Behavioural Signals:** " + wr["Behavioural Signals"])
+                        st.markdown("**Model Reason Codes:** " + wr["AI Reason Codes"])
+                        st.markdown("**Financial Health Narrative:**")
+                        st.write(wr["Health Narrative"])
+                    else:
+                        st.info("No workers to display.")
+
+        # ----------------------- AML / SECURITY TAB ----------------- #
+        with tab_sec:
+            col_tbl_1, col_chart_5 = st.columns(2)
+            
+            with col_tbl_1:
+                with st.container(border=True):
+                    st.subheader("AML & Risk Monitoring")
+                    base_anom = results["Baseline"]["anomalies"]
+                    pol_anom = results["Policy"]["anomalies"]
+                    st.markdown("#### Anomaly Table (Baseline & Policy)")
+                    all_anom = pd.concat([base_anom, pol_anom], ignore_index=True)
+                    if all_anom.empty:
+                        st.info("No anomalies detected under current rules.")
+                    else:
+                        st.dataframe(
+                            all_anom.sort_values(["Scenario", "Emirate", "Sector"]),
+                            use_container_width=True,
+                            height=350,
+                        )
+            
+            with col_chart_5:
+                # Donut chart: anomalies by scenario
+                with st.container(border=True):
+                    st.markdown("#### Anomaly Composition by Scenario")
+                    if all_anom.empty:
+                        st.info("No anomalies to plot.")
+                    else:
+                        scen_counts = (
+                            all_anom["Scenario"]
+                            .value_counts()
+                            .rename_axis("Scenario")
+                            .reset_index(name="Count")
+                        )
+                        fig_donut = px.pie(
+                            scen_counts,
+                            names="Scenario",
+                            values="Count",
+                            hole=0.5,
+                            color="Scenario",
+                            color_discrete_map={
+                                "Baseline": COLOR_BASELINE,
+                                "Policy": COLOR_POLICY,
+                            },
+                        )
+                        fig_donut.update_layout(
+                            template="simple_white",
+                            showlegend=True,
+                        )
+                        st.plotly_chart(fig_donut, use_container_width=True)
+
+                # Bubble grid: anomalies by Emirate & Sector
+                with st.container(border=True):
+                    st.markdown("#### Anomaly Grid (Emirate × Sector)")
+                    if all_anom.empty:
+                        st.info("No anomalies to plot.")
+                    else:
+                        heat_df = (
+                            all_anom
+                            .groupby(["Emirate", "Sector"])
+                            .size()
+                            .reset_index(name="Anomaly Count")
+                        )
+                        fig_ac = px.scatter(
+                            heat_df,
+                            x="Sector",
+                            y="Emirate",
+                            size="Anomaly Count",
+                            color="Anomaly Count",
+                            color_continuous_scale="Reds",
+                            size_max=40,
+                        )
+                        fig_ac.update_layout(
+                            template="simple_white",
+                            xaxis_title="Sector",
+                            yaxis_title="Emirate",
+                        )
+                        fig_ac.update_xaxes(tickangle=-45)
+                        st.plotly_chart(fig_ac, use_container_width=True)
+
+    # FHI footer
+    st.caption(
+        f"Simulation timestamp: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} · "
+        "Baseline = today’s behaviour · Policy = simulated improvement in wage stability & savings · "
+        "Synthetic data only · Powered by FinYo Inclusion Engine."
+    )
 
 # ====================================================================
 # TAB 2 – FRI / BANK VIEW
 # ====================================================================
+
 with tab_fri:
     st.subheader("Alternative Credit Scoring – Bank Dashboard (FRI)")
+
     st.caption(
         "This view uses the data from The FHI to build a synthetic bank portfolio. it demonstrates how the FRI score is used to assign risk grades, "
         "calculate loan caps, and provide decision reasons."
     )
-    
-    if not st.session_state.get("fri_results"):
-        st.info("FRI data not available. Please refresh the page.")
+
+    if not st.session_state.get("fhi_results"):
+        st.info("Click **Run Full Simulation (Baseline + Policy)** on the 'Financial Health (FHI)' tab first to generate the data.")
     else:
-        fri_port = st.session_state["fri_results"]["portfolio"]
-        s = st.session_state["fri_results"]["summary"]
+        all_workers_df = pd.concat([
+            st.session_state["fhi_results"]["Baseline"]["workers"],
+            st.session_state["fhi_results"]["Policy"]["workers"]
+        ], ignore_index=True)
         
+        fri_port, s = build_fri_portfolio_from_cohort(all_workers_df)
+
         with st.container(border=True):
             k1, k2, k3, k4, k5 = st.columns(5)
             with k1:
@@ -1346,9 +1392,9 @@ with tab_fri:
                 st.metric("Grade C + D (Elevated / High Risk)", f"{s['count_high']}")
             with k5:
                 st.metric("Total Borrowers", f"{s['total']}")
-        
+
         c1, c2 = st.columns(2)
-        
+
         # --- Histogram + density line for FRI Score (0–100) ---
         with c1:
             with st.container(border=True):
@@ -1363,7 +1409,6 @@ with tab_fri:
                         marginal=None,
                         color_discrete_sequence=[COLOR_POLICY]
                     )
-                    
                     # Approximate density curve from histogram
                     scores = fri_port["FRI Score (0–100)"].dropna().values
                     if len(scores) > 1:
@@ -1375,14 +1420,13 @@ with tab_fri:
                             mode="lines",
                             name="Density",
                         )
-                    
                     fig_hist.update_layout(
                         template="simple_white",
                         xaxis_title="FRI Score (0–100)",
                         yaxis_title="Number of borrowers",
                     )
                     st.plotly_chart(fig_hist, use_container_width=True)
-        
+
         # --- Donut Chart: Portfolio Composition by Risk Group ---
         with c2:
             with st.container(border=True):
@@ -1407,7 +1451,7 @@ with tab_fri:
                         risk_group_df,
                         names="Risk Group",
                         values="Count",
-                        hole=0.5,
+                        hole=0.5, # This makes it a donut chart
                         color="Risk Group",
                         color_discrete_map={
                             "Low / Moderate (A+B)": COLOR_POLICY,
@@ -1419,29 +1463,48 @@ with tab_fri:
                         template="simple_white",
                         showlegend=True,
                         legend_title_text="Risk Group",
-                        margin=dict(t=40, b=20, l=20, r=20),
+                        margin=dict(t=40, b=20, l=20, r=20), # Adjust margin for aesthetics
                     )
                     st.plotly_chart(fig_grade, use_container_width=True)
-        
+
+
+
+        # =======================================================# =====================================================================
+        # --------------------------------------------------------------------
+        # --------------------------------------------------------------------
         # --------------------------------------------------------------------
         # REPAYMENT PERFORMANCE INTELLIGENCE (Professional Layout)
         # --------------------------------------------------------------------
-        with st.expander("Repayment Performance Intelligence", expanded=True):
+        with st.expander("Repayment Performance Intelligence", expanded=True): # <-- Set expanded=True
+
+            # Ensure data exists
+            if "fhi_results" in st.session_state and st.session_state["fhi_results"]:
+                all_workers_df = pd.concat(
+                    [
+                        st.session_state["fhi_results"]["Baseline"]["workers"],
+                        st.session_state["fhi_results"]["Policy"]["workers"],
+                    ],
+                    ignore_index=True,
+                )
+            else:
+                all_workers_df = pd.DataFrame()
+
+            fri_port, s = build_fri_portfolio_from_cohort(all_workers_df)
             fri_port_display = (
                 fri_port.rename(columns={"AI Reason Codes": "Reason Codes"}).copy()
                 if not fri_port.empty
                 else pd.DataFrame()
             )
-            
+
             if fri_port_display.empty:
                 st.info("No borrower-level data available. Run the full simulation first.")
             else:
                 # --- Build compact layout ---
                 left_col, right_col = st.columns([0.4, 0.6])
-                
+
                 # Left: Donut chart
                 with left_col:
-                    with st.container(border=True):
+                    with st.container(border=True): # <-- Add border
                         st.markdown("#### Repayment Behaviour Distribution")
                         repay_mix = (
                             fri_port_display["Repayment Behaviour"]
@@ -1450,7 +1513,7 @@ with tab_fri:
                             .reset_index()
                         )
                         repay_mix.columns = ["Behaviour", "Share %"]
-                        
+
                         fig_repay = px.pie(
                             repay_mix,
                             names="Behaviour",
@@ -1472,10 +1535,10 @@ with tab_fri:
                             margin=dict(t=20, b=20, l=20, r=20),
                         )
                         st.plotly_chart(fig_repay, use_container_width=True)
-                
+
                 # Right: Borrower table
                 with right_col:
-                    with st.container(border=True):
+                    with st.container(border=True): # <-- Add border
                         st.markdown("#### Borrower Portfolio Table")
                         display_cols = [
                             "Borrower ID",
@@ -1484,17 +1547,23 @@ with tab_fri:
                             "Risk Grade (A–D)",
                             "Repayment Behaviour",
                             "Repayment Risk",
-                            "Proactive Alert",
+                            "Proactive Alert", # <-- ADD THE NEW COLUMN
                             "Loan Cap (AED)",
                         ]
                         st.dataframe(
                             fri_port_display[display_cols]
-                            .sort_values("FRI Score (0–100)", ascending=False),
+                            .sort_values("FRI Score (0–100)", ascending=False), # <-- REMOVED .head(20)
                             use_container_width=True,
                             height=280,
                         )
+
+            # ------------------------------------------------------------------
+
+        # ------------------------------------------------------------------
         
+        # ------------------------------------------------------------------
         # Footer caption for compliance clarity
+        # ------------------------------------------------------------------
         st.caption(
             "Compact demonstration — all borrowers remain **eligible**; "
             "risk grades only adjust **loan size and duration**, not inclusion. "
