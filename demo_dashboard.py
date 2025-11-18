@@ -1,4 +1,4 @@
-thats my code: # =====================================================================
+
 # FinYo Inclusion Engine — 100% IN-MEMORY DEMO (FINAL v7 – Emirate Bias)
 #
 #    • STRATEGY: 100% IN-MEMORY.
@@ -446,12 +446,11 @@ def run_full_scenario_internal(label: str, is_policy: bool):
                         sav = safe_get(features, "savings_ratio", 0.25)
                         rent = safe_get(features, "rent_ratio", 0.30)
                         rem = safe_get(features, "remittance_ratio", 0.25)
-                        # --- FIX: Use multiplicative boosts, not additive ---
-                        # This makes the uplift proportional to the starting value
-                        features["income_stability"] = min(1.0, inc * (1 + POLICY_INCOME_BOOST))
-                        features["savings_ratio"] = min(1.0, sav * (1 + POLICY_SAVINGS_BOOST))
-                        features["rent_ratio"] = max(0.0, rent * (1 - POLICY_RENT_REDUCTION))
-                        features["remittance_ratio"] = max(0.0, rem * (1 - POLICY_REMIT_REDUCTION))
+                        
+                        features["income_stability"] = min(1.0, inc + POLICY_INCOME_BOOST)
+                        features["savings_ratio"] = min(1.0, sav + POLICY_SAVINGS_BOOST)
+                        features["rent_ratio"] = max(0.0, rent - POLICY_RENT_REDUCTION)
+                        features["remittance_ratio"] = max(0.0, rem - POLICY_REMIT_REDUCTION)
                     
                     # 3. Derive metrics
                     bh = derive_behavioural_metrics(features)
@@ -986,16 +985,15 @@ with tab_fhi:
                     orientation="h",
                     barmode="group",
                     color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
+                    text_auto=".2f",
                 )
                 fig_em.update_layout(
                     yaxis_title="Emirate",
-                    xaxis_title="Average FHI (0–1)",
+                    xaxis_title="Average FHI",
                     template="simple_white",
                     legend_title="Scenario",
                 )
                 fig_em.update_yaxes(categoryorder="category ascending")
-                # 🔥 FIX: force real FHI scale
-                fig_em.update_xaxes(range=[0, 1])
                 st.plotly_chart(fig_em, use_container_width=True)
         
         # --- Bubble Grid for Emirate × Sector FHI uplift (Policy – Baseline) ---
