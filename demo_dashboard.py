@@ -372,7 +372,7 @@ def derive_behavioural_metrics(features: dict) -> dict:
     }
 # --- This is the new, fast, in-memory simulation function ---
 # STEP 3: Changed cache decorator
-@st.cache_data(show_spinner=False, ttl=1)
+@st.cache_data(show_spinner=False,)
 def run_full_scenario_internal(label: str, is_policy: bool):
     """
     Generate full UAE simulation for one scenario (Baseline OR Policy).
@@ -676,7 +676,7 @@ def printable_text_report(report_dict: dict) -> str:
 # --------------------------------------------------------------------
 # FRI PORTFOLIO GENERATION (BANK VIEW)
 # --------------------------------------------------------------------
-@st.cache_data(show_spinner=False, ttl=1)
+@st.cache_data(show_spinner=False,)
 def build_fri_portfolio_from_cohort(workers_df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     """
     Takes the FHI worker cohort and enriches it with
@@ -1463,3 +1463,4 @@ with tab_fri:
             "risk grades only adjust **loan size and duration**, not inclusion. "
             "Data shown is 100% synthetic (FinYo Inclusion Engine)."
         )
+
