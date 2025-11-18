@@ -987,6 +987,8 @@ with tab_fhi:
                     barmode="group",
                     color_discrete_map={"Baseline": COLOR_BASELINE, "Policy": COLOR_POLICY},
                 )
+                fig_em.update_traces(text=None, texttemplate=None)
+                
                 fig_em.update_layout(
                     yaxis_title="Emirate",
                     xaxis_title="Average FHI (0–1)",
@@ -1498,3 +1500,4 @@ with tab_fri:
             "risk grades only adjust **loan size and duration**, not inclusion. "
             "Data shown is 100% synthetic (FinYo Inclusion Engine)."
         )
+
