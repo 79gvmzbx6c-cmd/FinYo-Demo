@@ -1012,25 +1012,31 @@ with tab_fhi:
                 )
                 merged["FHI Uplift"] = merged["Avg FHI_Policy"] - merged["Avg FHI_Baseline"]
                 
-                # Bubble grid scatter plot
-                fig_bubble = px.scatter(
-                    merged,
-                    x="Sector",
-                    y="Emirate",
-                    size="FHI Uplift",
-                    color="FHI Uplift",
-                    color_continuous_scale=["#f1e3d3", "#d4c2a3", "#6fa79b"],
-                    size_max=40,
-                )
-                fig_bubble.update_layout(
-                    template="simple_white",
-                    xaxis_title="Sector",
-                    yaxis_title="Emirate",
-                    height=500,
-                    coloraxis_colorbar_title="Δ FHI",
-                )
-                fig_bubble.update_xaxes(tickangle=-45)
-                st.plotly_chart(fig_bubble, use_container_width=True)
+                # Filter out any invalid or negative uplift values for bubble sizing
+                merged_clean = merged[merged["FHI Uplift"] > 0].copy()
+                
+                if merged_clean.empty:
+                    st.info("No positive FHI uplift data to display.")
+                else:
+                    # Bubble grid scatter plot
+                    fig_bubble = px.scatter(
+                        merged_clean,
+                        x="Sector",
+                        y="Emirate",
+                        size="FHI Uplift",
+                        color="FHI Uplift",
+                        color_continuous_scale=["#f1e3d3", "#d4c2a3", "#6fa79b"],
+                        size_max=40,
+                    )
+                    fig_bubble.update_layout(
+                        template="simple_white",
+                        xaxis_title="Sector",
+                        yaxis_title="Emirate",
+                        height=500,
+                        coloraxis_colorbar_title="Δ FHI",
+                    )
+                    fig_bubble.update_xaxes(tickangle=-45)
+                    st.plotly_chart(fig_bubble, use_container_width=True)
     
     # ----------------------- EMPLOYER TAB ----------------------- #
     with tab_emp:
