@@ -1,10 +1,10 @@
 # =====================================================================
 # FinYo Inclusion Engine — 100% IN-MEMORY DEMO (FINAL v7 – Emirate Bias)
 #
-#    • STRATEGY: 100% IN-MEMORY.
-#    • NEW: Added EMIRATE_BIAS to the simulation.
-#      This creates realistic, different FHI scores for each
-#      Emirate, fixing the "flat chart" problem.
+#     • STRATEGY: 100% IN-MEMORY.
+#     • NEW: Added EMIRATE_BIAS to the simulation.
+#       This creates realistic, different FHI scores for each
+#       Emirate, fixing the "flat chart" problem.
 # =====================================================================
 import math
 from datetime import datetime, timezone
@@ -30,12 +30,12 @@ TABLE_BORDER = "#E5DCCB"
 st.markdown(
     f"""
     <style>
-        .stApp {{
-            background-color: {BG_COLOR};
-        }}
-        .stDataFrame {{
-            border: 1px solid {TABLE_BORDER};
-        }}
+         .stApp {{
+             background-color: {BG_COLOR};
+         }}
+         .stDataFrame {{
+             border: 1px solid {TABLE_BORDER};
+         }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -112,13 +112,13 @@ SECTOR_CODE = {
 
 # --- NEW: Emirate-level behavioural multipliers (realistic differences) ---
 EMIRATE_BIAS = {
-    "Abu Dhabi":      {"income": +0.08, "savings": +0.04, "rent": -0.03, "remit": -0.02},
-    "Dubai":          {"income": +0.04, "savings": +0.03, "rent": +0.04, "remit": +0.00},
-    "Sharjah":        {"income": -0.02, "savings": -0.03, "rent": +0.02, "remit": +0.03},
-    "Ajman":          {"income": -0.04, "savings": -0.05, "rent": -0.03, "remit": +0.04},
-    "Ras Al Khaimah": {"income": +0.01, "savings": -0.02, "rent": -0.02, "remit": -0.03},
-    "Fujairah":       {"income": -0.03, "savings": -0.02, "rent": +0.01, "remit": +0.03},
-    "Umm Al Quwain":  {"income": -0.05, "savings": -0.05, "rent": +0.02, "remit": +0.04},
+    "Abu Dhabi":       {"income": +0.08, "savings": +0.04, "rent": -0.03, "remit": -0.02},
+    "Dubai":           {"income": +0.04, "savings": +0.03, "rent": +0.04, "remit": +0.00},
+    "Sharjah":         {"income": -0.02, "savings": -0.03, "rent": +0.02, "remit": +0.03},
+    "Ajman":           {"income": -0.04, "savings": -0.05, "rent": -0.03, "remit": +0.04},
+    "Ras Al Khaimah":  {"income": +0.01, "savings": -0.02, "rent": -0.02, "remit": -0.03},
+    "Fujairah":        {"income": -0.03, "savings": -0.02, "rent": +0.01, "remit": +0.03},
+    "Umm Al Quwain":   {"income": -0.05, "savings": -0.05, "rent": +0.02, "remit": +0.04},
 }
 
 FRI_GRADE_THRESHOLDS = {
@@ -149,7 +149,7 @@ def map_fhi_to_band_0_100(fhi: float) -> tuple[str, float]:
     """
     Map FHI 0–1 to 0–100 band with human label, per your RFP:
         0–39   → Financially Vulnerable
-        40–69 → Financially Coping
+        40–69  → Financially Coping
         70–100 → Financially Healthy
     """
     score_100 = max(0.0, min(100.0, fhi * 100))
@@ -687,11 +687,11 @@ def printable_text_report(report_dict: dict) -> str:
     bm = s['behaviour_metrics']
     lines.append("--------------------------------------------------")
     lines.append("Behavioural Metrics")
-    lines.append(f"  • Expense Pressure:  {bm['expense_pressure']:.2f}")
-    lines.append(f"  • Liquidity Buffer:  {bm['liquidity_buffer']:.2f}")
-    lines.append(f"  • Remittance Load:   {bm['remittance_load']:.2f}")
-    lines.append(f"  • Wage Consistency:  {bm['wage_consistency']:.2f}")
-    lines.append(f"  • Rent Ratio:        {bm['rent_ratio']:.2f}")
+    lines.append(f"  • Expense Pressure:   {bm['expense_pressure']:.2f}")
+    lines.append(f"  • Liquidity Buffer:   {bm['liquidity_buffer']:.2f}")
+    lines.append(f"  • Remittance Load:    {bm['remittance_load']:.2f}")
+    lines.append(f"  • Wage Consistency:   {bm['wage_consistency']:.2f}")
+    lines.append(f"  • Rent Ratio:         {bm['rent_ratio']:.2f}")
     lines.append("--------------------------------------------------")
     lines.append(f"Reason Codes: {s['reason_codes']}")
     lines.append(f"Estimated Payroll Delay (days): {s['est_payroll_delay_days']:.1f}")
@@ -838,10 +838,19 @@ st.caption(
 )
 
 # -------------------------------------------------------------
+# *** FIX: Corrected st.session_state logic ***
+# -------------------------------------------------------------
+if "fhi_results" not in st.session_state:
+    st.session_state["fhi_results"] = None
+
+if "fri_results" not in st.session_state:
+    st.session_state["fri_results"] = None
+
+# -------------------------------------------------------------
 # STEP 2: AUTO-RUN SIMULATION (Baseline + Policy)
 # This ensures the demo works instantly on Streamlit Cloud.
 # -------------------------------------------------------------
-if "fhi_results" not in st.session_state:
+if st.session_state["fhi_results"] is None: # <-- *** FIX: Check if None ***
     # Baseline scenario
     (
         w_base,
